@@ -1,41 +1,46 @@
-# Alza Trade Playwright tests
+# Alza Trade Portal - E2E Test Automation
 
-This repository contains Playwright tests for the Alza Trade supplier portal.
+End-to-end tests for the Alza Trade supplier portal (demo environment),
+built with Playwright and TypeScript using the Playwright Agents workflow
+(planner, generator, healer).
 
-## Configurable demo banner timeout
+## What the suite verifies
 
-Some tests (the demo sign-in flow) wait for a demo banner to appear on the landing page before continuing. If the portal is slow or your environment needs a longer wait, set the `DEMO_BANNER_TIMEOUT` environment variable (milliseconds).
+**Demo access (`tests/seed.spec.ts`)**
+Enters the public demo account from the landing page and confirms the
+session lands on the dashboard.
 
-- Default: `5000` (5 seconds)
-- Example (Windows PowerShell):
+**Orders - filter by ID (`tests/orders-filter-valid.spec.ts`)**
+1. Enters the demo account.
+2. Navigates to Objednávky (Orders).
+3. Filters the orders list by a valid order ID.
+4. Asserts the result count is exactly one record.
+5. Asserts the matching order ID is visible in the results panel.
 
-```powershell
-$env:DEMO_BANNER_TIMEOUT = '10000'
-npx playwright test tests/orders-filter-valid.spec.ts
-```
+## Project structure
 
-- Example (macOS / Linux):
+- `tests/fixtures.ts` - shared fixture that performs the demo login once and
+  provides an authenticated page to each test (keeps tests DRY).
+- `tests/` - test specs.
+- `specs/` - Markdown test plan produced by the planner agent.
+- `.github/agents/` - Playwright agent definitions (planner, generator, healer).
+
+## Tech and approach
+
+- Playwright + TypeScript, Chromium project.
+- Locator strategy: prefers `data-tid` test attributes, falls back to
+  role/text locators.
+- Assertions are scoped to specific page regions to avoid strict-mode
+  ambiguity. For example, the order-ID check targets the results panel so it
+  does not also match the filter chip in the search box.
+- Built with the Playwright Agents workflow; generated tests were reviewed
+  and corrected by hand before committing.
+
+## Run locally
 
 ```bash
-export DEMO_BANNER_TIMEOUT=10000
-npx playwright test tests/orders-filter-valid.spec.ts
-```
-
-## Run the single spec
-
-Run only the orders filter spec:
-
-```bash
-npx playwright test tests/orders-filter-valid.spec.ts
-```
-
-Or run all tests:
-
-```bash
+npm install
+npx playwright install chromium
 npx playwright test
+npx playwright show-report
 ```
-
-## Notes
-
-- If the demo banner does not appear, the test will fail with a clear error explaining how to increase the timeout.
-- The timeout variable must be a positive integer (milliseconds).
